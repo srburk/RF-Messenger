@@ -102,7 +102,7 @@ extern "C" {
 void SubghzApp_Init(void);
 
 /* USER CODE BEGIN EFP */
-
+void RadioISRCallback(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

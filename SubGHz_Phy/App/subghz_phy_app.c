@@ -26,7 +26,7 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "application_service.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -41,6 +41,18 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+/*Timeout*/
+#define RX_TIMEOUT_VALUE              3000
+#define TX_TIMEOUT_VALUE              3000
+
+/* Afc bandwidth in Hz */
+#define FSK_AFC_BANDWIDTH             83333
+
+#define MAX_APP_BUFFER_SIZE          255
+#if (PAYLOAD_LEN > MAX_APP_BUFFER_SIZE)
+#error PAYLOAD_LEN must be less or equal than MAX_APP_BUFFER_SIZE
+#endif /* (PAYLOAD_LEN > MAX_APP_BUFFER_SIZE) */
 
 /* USER CODE END PD */
 
@@ -109,6 +121,24 @@ void SubghzApp_Init(void)
 
   /* USER CODE BEGIN SubghzApp_Init_2 */
 
+  APP_LOG(TS_OFF, VLEVEL_M, "---------------\n\r");
+  APP_LOG(TS_OFF, VLEVEL_M, "FSK_MODULATION\n\r");
+  APP_LOG(TS_OFF, VLEVEL_M, "FSK_BW=%d Hz\n\r", FSK_BANDWIDTH);
+  APP_LOG(TS_OFF, VLEVEL_M, "FSK_DR=%d bits/s\n\r", FSK_DATARATE);
+  APP_LOG(TS_OFF, VLEVEL_M, "TX POWER=%i dbm\n\r", TX_OUTPUT_POWER);
+
+  Radio.SetTxConfig(MODEM_FSK, TX_OUTPUT_POWER, FSK_FDEV, 0,
+					FSK_DATARATE, 0,
+					FSK_PREAMBLE_LENGTH, FSK_FIX_LENGTH_PAYLOAD_ON,
+					true, 0, 0, 0, TX_TIMEOUT_VALUE);
+
+  Radio.SetRxConfig(MODEM_FSK, FSK_BANDWIDTH, FSK_DATARATE,
+					0, FSK_AFC_BANDWIDTH, FSK_PREAMBLE_LENGTH,
+					0, FSK_FIX_LENGTH_PAYLOAD_ON, 0, true,
+					0, 0, false, true);
+
+  Radio.SetMaxPayloadLength(MODEM_FSK, MAX_APP_BUFFER_SIZE);
+
   /* USER CODE END SubghzApp_Init_2 */
 }
 
@@ -149,4 +179,9 @@ static void OnRxError(void)
 
 /* USER CODE BEGIN PrFD */
 
+// callback to be triggered to let application service know
+void RadioISRCallback(void) {
+	uint32_t flags = 0x00000001U; // Define the flag to set
+	osThreadFlagsSet(applicationServiceTaskID, flags);
+}
 /* USER CODE END PrFD */

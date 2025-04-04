@@ -29,6 +29,11 @@
 /* USER CODE BEGIN Includes */
 #include "stm32_timer.h"
 #include "sys_app.h"
+
+// Services //
+#include "radio_service.h"
+#include "application_service.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +59,19 @@ const osThreadAttr_t printStatusTask_attr = {
 		.name = "printStatusTask",
 		.stack_size = 128 * 4, // in bytes
 		.priority = (osPriority_t) osPriorityLow,
+};
+
+osThreadId_t radioServiceTaskID;
+const osThreadAttr_t radioServiceTask_attr = {
+		.name = "radioServiceTask",
+		.stack_size = 128 * 4, // in bytes
+		.priority = (osPriority_t) osPriorityHigh,
+};
+
+const osThreadAttr_t applicationServiceTask_attr = {
+		.name = "applicationServiceTask",
+		.stack_size = 128 * 4, // in bytes
+		.priority = (osPriority_t) osPriorityHigh,
 };
 
 /* USER CODE END Variables */
@@ -99,6 +117,16 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+
+
+  // DOING WEIRD STUFF HERE TO AVOID DEFAULT TASK SCHEDULING
+  printStatusTaskID = osThreadNew(printStatusTask, NULL, &printStatusTask_attr);
+//  radioServiceTaskID = osThreadNew(radioServiceTask, NULL, &radioServiceTask_attr);
+  applicationServiceTaskID = osThreadNew(applicationServiceTask, NULL, &applicationServiceTask_attr);
+
+
+  return;
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -107,7 +135,6 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  printStatusTaskID = osThreadNew(printStatusTask, NULL, &printStatusTask_attr);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -128,10 +155,11 @@ void StartDefaultTask(void *argument)
   /* init code for SubGHz_Phy */
   MX_SubGHz_Phy_Init();
   /* USER CODE BEGIN StartDefaultTask */
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(2000);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -141,7 +169,8 @@ void StartDefaultTask(void *argument)
 void printStatusTask(void *argument) {
 	while(1) {
 		APP_LOG(TS_ON, VLEVEL_M, "Application Status\n\r");
-		osDelay(5000);
+		osDelay(1000);
+	    RadioISRCallback();
 	}
 }
 /* USER CODE END Application */
