@@ -11,7 +11,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os.h"
 
+/* Defines ------------------------------------------------------------------*/
+#define KEY_EVENT_FLAG	0x01
+#define RADIO_EVENT_FLAG 0x02
+
+/* Variables ------------------------------------------------------------------*/
+
 extern osThreadId_t applicationServiceTaskID;
+
+/* Functions ------------------------------------------------------------------*/
 
 void applicationServiceTask(void *argument);
 

@@ -119,9 +119,9 @@ void MX_FREERTOS_Init(void) {
 
 
   // DOING WEIRD STUFF HERE TO AVOID DEFAULT TASK SCHEDULING
-//  radioServiceTaskID = osThreadNew(radioServiceTask, NULL, &radioServiceTask_attr);
+  radioServiceTaskID = osThreadNew(radioServiceTask, NULL, &radioServiceTask_attr);
   applicationServiceTaskID = osThreadNew(applicationServiceTask, NULL, &applicationServiceTask_attr);
-  inputServiceTaskID = osThreadNew(inputServiceTask, NULL, &inputServiceTask_attr);
+//  inputServiceTaskID = osThreadNew(inputServiceTask, NULL, &inputServiceTask_attr);
 
   return;
 
