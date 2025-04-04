@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
+#include <interaction_service.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -33,7 +34,6 @@
 // Services //
 #include "radio_service.h"
 #include "application_service.h"
-#include "input_service.h"
 
 /* USER CODE END Includes */
 
@@ -68,8 +68,8 @@ const osThreadAttr_t applicationServiceTask_attr = {
 		.priority = (osPriority_t) osPriorityHigh,
 };
 
-const osThreadAttr_t inputServiceTask_attr = {
-		.name = "inputServiceTask",
+const osThreadAttr_t interactionServiceTask_attr = {
+		.name = "interactionServiceTask",
 		.stack_size = 128 * 4, // in bytes
 		.priority = (osPriority_t) osPriorityLow,
 };
@@ -121,7 +121,7 @@ void MX_FREERTOS_Init(void) {
   // DOING WEIRD STUFF HERE TO AVOID DEFAULT TASK SCHEDULING
   radioServiceTaskID = osThreadNew(radioServiceTask, NULL, &radioServiceTask_attr);
   applicationServiceTaskID = osThreadNew(applicationServiceTask, NULL, &applicationServiceTask_attr);
-//  inputServiceTaskID = osThreadNew(inputServiceTask, NULL, &inputServiceTask_attr);
+  interactionServiceTaskID = osThreadNew(interactionServiceTask, NULL, &interactionServiceTask_attr);
 
   return;
 

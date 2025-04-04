@@ -7,29 +7,17 @@
 
 #include "application_service.h"
 
+#include "i2c.h"
 #include "stm32_timer.h"
 #include "sys_app.h"
 
 // Private Define
 
-#define ISR_FLAG_TIMEOUT 50
+#define ISR_FLAG_TIMEOUT 10
 
 // Variables
 
 osThreadId_t applicationServiceTaskID = NULL;
-
-// Keyboard
-uint8_t key;
-
-// Private Function Definitions
-
-static void inputSubTask(void);
-
-// Private Functions
-
-static void inputSubTask(void) {
-
-}
 
 // Public Functions
 
@@ -41,8 +29,7 @@ void applicationServiceTask(void *argument) {
 
 		if (result & flags) {
 			// Handle the event triggered by the ISR
-			APP_LOG(TS_OFF, VLEVEL_M, "Event received by application! \n\r");
+			APP_LOG(TS_OFF, VLEVEL_M, " [app_service] Event received by application! \n\r");
 		}
-
 	}
 }
