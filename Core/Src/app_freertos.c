@@ -33,6 +33,7 @@
 // Services //
 #include "radio_service.h"
 #include "application_service.h"
+#include "input_service.h"
 
 /* USER CODE END Includes */
 
@@ -54,13 +55,6 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
-osThreadId_t printStatusTaskID;
-const osThreadAttr_t printStatusTask_attr = {
-		.name = "printStatusTask",
-		.stack_size = 128 * 4, // in bytes
-		.priority = (osPriority_t) osPriorityLow,
-};
-
 osThreadId_t radioServiceTaskID;
 const osThreadAttr_t radioServiceTask_attr = {
 		.name = "radioServiceTask",
@@ -74,6 +68,12 @@ const osThreadAttr_t applicationServiceTask_attr = {
 		.priority = (osPriority_t) osPriorityHigh,
 };
 
+const osThreadAttr_t inputServiceTask_attr = {
+		.name = "inputServiceTask",
+		.stack_size = 128 * 4, // in bytes
+		.priority = (osPriority_t) osPriorityLow,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -85,7 +85,6 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void printStatusTask(void *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -120,10 +119,9 @@ void MX_FREERTOS_Init(void) {
 
 
   // DOING WEIRD STUFF HERE TO AVOID DEFAULT TASK SCHEDULING
-  printStatusTaskID = osThreadNew(printStatusTask, NULL, &printStatusTask_attr);
 //  radioServiceTaskID = osThreadNew(radioServiceTask, NULL, &radioServiceTask_attr);
   applicationServiceTaskID = osThreadNew(applicationServiceTask, NULL, &applicationServiceTask_attr);
-
+  inputServiceTaskID = osThreadNew(inputServiceTask, NULL, &inputServiceTask_attr);
 
   return;
 
@@ -166,11 +164,5 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void printStatusTask(void *argument) {
-	while(1) {
-		APP_LOG(TS_ON, VLEVEL_M, "Application Status\n\r");
-		osDelay(1000);
-	    RadioISRCallback();
-	}
-}
+
 /* USER CODE END Application */

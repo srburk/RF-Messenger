@@ -66,7 +66,6 @@
 static RadioEvents_t RadioEvents;
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,7 +99,7 @@ static void OnRxTimeout(void);
 static void OnRxError(void);
 
 /* USER CODE BEGIN PFP */
-
+static void RadioISRCallback(void);
 /* USER CODE END PFP */
 
 /* Exported functions ---------------------------------------------------------*/
@@ -127,6 +126,8 @@ void SubghzApp_Init(void)
   APP_LOG(TS_OFF, VLEVEL_M, "FSK_DR=%d bits/s\n\r", FSK_DATARATE);
   APP_LOG(TS_OFF, VLEVEL_M, "TX POWER=%i dbm\n\r", TX_OUTPUT_POWER);
 
+  Radio.SetChannel(RF_FREQUENCY);
+
   Radio.SetTxConfig(MODEM_FSK, TX_OUTPUT_POWER, FSK_FDEV, 0,
 					FSK_DATARATE, 0,
 					FSK_PREAMBLE_LENGTH, FSK_FIX_LENGTH_PAYLOAD_ON,
@@ -144,18 +145,30 @@ void SubghzApp_Init(void)
 
 /* USER CODE BEGIN EF */
 
+void startRadioListening(void) {
+	Radio.Rx(0);
+}
+
+void sendRadioMessage(uint8_t *buffer, uint8_t size) {
+	Radio.Send(buffer, size);
+}
+
 /* USER CODE END EF */
 
 /* Private functions ---------------------------------------------------------*/
 static void OnTxDone(void)
 {
   /* USER CODE BEGIN OnTxDone */
+  APP_LOG(TS_ON, VLEVEL_L, "OnTxDone\n\r");
+  RadioISRCallback();
   /* USER CODE END OnTxDone */
 }
 
 static void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t LoraSnr_FskCfo)
 {
   /* USER CODE BEGIN OnRxDone */
+  APP_LOG(TS_ON, VLEVEL_L, "OnRxDone\n\r");
+  RadioISRCallback();
   /* USER CODE END OnRxDone */
 }
 
@@ -180,7 +193,7 @@ static void OnRxError(void)
 /* USER CODE BEGIN PrFD */
 
 // callback to be triggered to let application service know
-void RadioISRCallback(void) {
+static void RadioISRCallback(void) {
 	uint32_t flags = 0x00000001U; // Define the flag to set
 	osThreadFlagsSet(applicationServiceTaskID, flags);
 }

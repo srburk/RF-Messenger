@@ -102,7 +102,19 @@ extern "C" {
 void SubghzApp_Init(void);
 
 /* USER CODE BEGIN EFP */
-void RadioISRCallback(void);
+
+/**
+  * @brief  Start Continuous RX
+  */
+void radioStartListening(void);
+
+/**
+  * @brief  Send message
+  * @param 	char buffer to be sent
+  * @param	size of buffer to be sent
+  */
+void radioSendMessage(unsigned char *buffer, unsigned char size);
+
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
