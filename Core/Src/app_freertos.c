@@ -27,7 +27,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stm32_timer.h"
+#include "sys_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,6 +49,13 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
+osThreadId_t printStatusTaskID;
+const osThreadAttr_t printStatusTask_attr = {
+		.name = "printStatusTask",
+		.stack_size = 128 * 4, // in bytes
+		.priority = (osPriority_t) osPriorityLow,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -59,6 +67,7 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+void printStatusTask(void *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -98,6 +107,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  printStatusTaskID = osThreadNew(printStatusTask, NULL, &printStatusTask_attr);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -128,5 +138,10 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
+void printStatusTask(void *argument) {
+	while(1) {
+		APP_LOG(TS_ON, VLEVEL_M, "Application Status\n\r");
+		osDelay(5000);
+	}
+}
 /* USER CODE END Application */

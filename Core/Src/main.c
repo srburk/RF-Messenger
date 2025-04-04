@@ -25,6 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32_timer.h"
+#include "sys_app.h"
 
 /* USER CODE END Includes */
 
@@ -92,6 +94,8 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   /* USER CODE BEGIN 2 */
+
+  MX_SubGHz_Phy_Init();
 
   /* USER CODE END 2 */
 
