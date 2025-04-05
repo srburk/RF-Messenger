@@ -9,12 +9,15 @@
 #include "i2c.h"
 #include "stm32_timer.h"
 #include "sys_app.h"
+#include "string.h"
+
+#include "global_config.h"
+#include "radio_service.h"
+
 
 /* PD ------------------------------------------------------------------*/
 
 #define KEYBOARD_I2C_DELAY 20
-
-#define INPUT_BUFFER_SIZE 100 // 100 characters
 
 // keys
 #define ESC_KEY 0x1b
@@ -70,19 +73,31 @@ void interactionServiceTask(void *argument) {
 			break;
 		case UI_ENTRY_STATE:
 
-			// check for ESC or SEND
+			// check for ESC
 			if (key == ESC_KEY) {
 				resetInputState();
 				currentUIState = UI_MENU_STATE;
 				break;
 			}
 
+			// SEND
 			if (key == ENTER_KEY) {
-				resetInputState();
-				// SEND
+				if (inputBufferPosition > 0 &&
+				        inputBufferPosition <= RADIO_MSG_MAX_SIZE &&
+				        inputBufferPosition <= INPUT_BUFFER_SIZE) {
 
-				// TEST - print buffer
-				APP_LOG(TS_OFF, VLEVEL_M, "Input Buffer to send: %s \n\r", inputBuffer);
+				        radioMessage_t pendingRadioMessage;
+
+				        pendingRadioMessage.length = inputBufferPosition;
+
+//				        memcpy(pendingRadioMessage.data, inputBuffer, strlen(inputBuffer) + 1);
+
+				        osMessageQueuePut(radioInputQueueHandle, &pendingRadioMessage, 0, 0);
+
+				        resetInputState();
+				    } else {
+				        APP_LOG(TS_OFF, VLEVEL_M, "[Interaction Service] Invalid input length or empty buffer");
+				    }
 				break;
 			}
 

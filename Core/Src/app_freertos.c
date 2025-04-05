@@ -116,7 +116,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-
+  radioInputQueueHandle = osMessageQueueNew(RADIO_INPUT_QUEUE_SIZE, sizeof(radioMessage_t), NULL);
 
   // DOING WEIRD STUFF HERE TO AVOID DEFAULT TASK SCHEDULING
   radioServiceTaskID = osThreadNew(radioServiceTask, NULL, &radioServiceTask_attr);
