@@ -92,16 +92,12 @@ void DBG_Init(void)
 
   /* Enable the GPIO Clock */
   PROBE_LINE1_CLK_ENABLE();
-  PROBE_LINE2_CLK_ENABLE();
 
   GPIO_InitStruct.Pin    = PROBE_LINE1_PIN;
   HAL_GPIO_Init(PROBE_LINE1_PORT, &GPIO_InitStruct);
-  GPIO_InitStruct.Pin    = PROBE_LINE2_PIN;
-  HAL_GPIO_Init(PROBE_LINE2_PORT, &GPIO_InitStruct);
 
   /* Reset probe Pins */
   HAL_GPIO_WritePin(PROBE_LINE1_PORT, PROBE_LINE1_PIN, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(PROBE_LINE2_PORT, PROBE_LINE2_PIN, GPIO_PIN_RESET);
   /* USER CODE BEGIN DBG_Init_2 */
 
   /* USER CODE END DBG_Init_2 */

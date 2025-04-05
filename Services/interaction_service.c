@@ -10,6 +10,7 @@
 #include "stm32_timer.h"
 #include "sys_app.h"
 #include "string.h"
+#include "liquidcrystal_i2c.h"
 
 #include "global_config.h"
 #include "radio_service.h"
@@ -18,26 +19,34 @@
 /* PD ------------------------------------------------------------------*/
 
 #define KEYBOARD_I2C_DELAY 20
+#define LCD_DISPLAY_WIDTH 20
 
 // keys
 #define ESC_KEY 0x1b
 #define BACK_KEY 0x08
 #define ENTER_KEY 0x0d
+#define LEFT_ARROW 0xB4
+#define RIGHT_ARROW 0xB7
 
 /* Types ------------------------------------------------------------------*/
 typedef enum {
     UI_MENU_STATE,
 	UI_ENTRY_STATE,
+	UI_RECEIVE_STATE
 } uiState_t;
 
 /* PV ------------------------------------------------------------------*/
 
 osThreadId_t interactionServiceTaskID = NULL;
-uiState_t currentUIState = UI_ENTRY_STATE;
+uiState_t currentUIState = UI_MENU_STATE;
 
 uint8_t key;
 char inputBuffer[INPUT_BUFFER_SIZE];
 uint8_t inputBufferPosition = 0;
+
+static const char menuTopLeftText[] = "SEND";
+static const char menuTopRightText[] = "VVVVVV";
+static const char menuBottomText[] = "SELECTION";
 
 /* PFD ------------------------------------------------------------------*/
 
@@ -64,14 +73,42 @@ void interactionServiceTask(void *argument) {
 	// initialize input buffer
 	resetInputState();
 
+	// initialize the LCD screen
+	HD44780_Init(4);
+	HD44780_Clear();
+
 	while (1) {
 		read_keyboard(&key);
 
 		switch (currentUIState) {
 		case UI_MENU_STATE:
+
+			// print user menu to the LCD screen
+			HD44780_SetCursor(0, 0);
+			HD44780_PrintStr(menuTopLeftText);
+			HD44780_SetCursor(LCD_DISPLAY_WIDTH - strlen(menuTopRightText),0);
+			HD44780_PrintStr(menuTopRightText);
+			HD44780_SetCursor((LCD_DISPLAY_WIDTH - strlen(menuBottomText)) / 2, 3);
+			HD44780_PrintStr(menuBottomText);
+//			HAL_Delay(2000);
+
+			// check for user menu selection
+			if (key == LEFT_ARROW) {
+				HD44780_Clear();
+				currentUIState = UI_ENTRY_STATE;
+			}
+			else if (key == RIGHT_ARROW) {
+				HD44780_Clear();
+				currentUIState = UI_RECEIVE_STATE;
+			}
+
 			APP_LOG(TS_OFF, VLEVEL_M, "MENU STATE NOW \n\r");
 			break;
 		case UI_ENTRY_STATE:
+
+			// print user input to the LCD screen
+			HD44780_PrintStr(inputBuffer);
+			HD44780_SetCursor(inputBufferPosition, 0);
 
 			// check for ESC
 			if (key == ESC_KEY) {
@@ -123,6 +160,14 @@ void interactionServiceTask(void *argument) {
 					APP_LOG(TS_OFF, VLEVEL_M, "Input buffer full \n\r");
 				}
 			}
+
+			break;
+		case UI_RECEIVE_STATE:
+
+			// print user receive state to screen
+			HD44780_Clear();
+			HD44780_SetCursor(0,0);
+			// Edit :HD44780_PrintStr(Text Here);
 
 			break;
 		}

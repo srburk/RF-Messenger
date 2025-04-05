@@ -73,8 +73,6 @@ void MX_GPIO_Init(void);
 #define RCC_OSC32_OUT_GPIO_Port GPIOC
 #define FE_CTRL3_Pin GPIO_PIN_3
 #define FE_CTRL3_GPIO_Port GPIOC
-#define PROB2_Pin GPIO_PIN_13
-#define PROB2_GPIO_Port GPIOB
 #define FE_CTRL2_Pin GPIO_PIN_5
 #define FE_CTRL2_GPIO_Port GPIOC
 #define PROB1_Pin GPIO_PIN_12

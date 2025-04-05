@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include <interaction_service.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -34,6 +33,7 @@
 // Services //
 #include "radio_service.h"
 #include "application_service.h"
+#include "interaction_service.h"
 
 /* USER CODE END Includes */
 
