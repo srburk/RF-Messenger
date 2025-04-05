@@ -10,10 +10,19 @@
 #include "stm32_timer.h"
 #include "sys_app.h"
 
+osMessageQueueId_t radioInputQueueHandle;
+
 void radioServiceTask(void *argument) {
+
+	// init radio service
+
+	radioMessage_t incomingMessage;
+
     for (;;) {
-        // Perform service operations here
-		APP_LOG(TS_ON, VLEVEL_M, "Radio Service\n\r");
-        osDelay(1000); // Delay for 1000 milliseconds
+        // TODO: Add more sophisticated radio state machine and handling for messages
+    	if (osMessageQueueGet(radioInputQueueHandle, &incomingMessage, NULL, osWaitForever) == osOK) {
+			// Send the data
+			APP_LOG(TS_ON, VLEVEL_M, "Got message: %s \n\r", incomingMessage);
+		}
     }
 }
