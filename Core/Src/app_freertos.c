@@ -32,7 +32,8 @@
 #include "sys_app.h"
 
 // Services //
-#include "radio_service.h"
+//#include "radio_service.h"
+#include "subghz_phy_app.h"
 #include "application_service.h"
 
 /* USER CODE END Includes */
@@ -70,7 +71,7 @@ const osThreadAttr_t applicationServiceTask_attr = {
 
 const osThreadAttr_t interactionServiceTask_attr = {
 		.name = "interactionServiceTask",
-		.stack_size = 128 * 4, // in bytes
+		.stack_size = 128 * 8, // in bytes
 		.priority = (osPriority_t) osPriorityLow,
 };
 
@@ -117,6 +118,10 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   radioInputQueueHandle = osMessageQueueNew(RADIO_INPUT_QUEUE_SIZE, sizeof(radioMessage_t), NULL);
+
+  if (radioInputQueueHandle == NULL) {
+	  APP_LOG(TS_OFF, VLEVEL_M, "[Error] Failed to create radio input message queue\n\r");
+  }
 
   // DOING WEIRD STUFF HERE TO AVOID DEFAULT TASK SCHEDULING
   radioServiceTaskID = osThreadNew(radioServiceTask, NULL, &radioServiceTask_attr);

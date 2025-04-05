@@ -12,7 +12,8 @@
 #include "string.h"
 
 #include "global_config.h"
-#include "radio_service.h"
+#include "subghz_phy_app.h"
+//#include "radio_service.h"
 
 
 /* PD ------------------------------------------------------------------*/
@@ -35,9 +36,9 @@ typedef enum {
 osThreadId_t interactionServiceTaskID = NULL;
 uiState_t currentUIState = UI_ENTRY_STATE;
 
-uint8_t key;
-char inputBuffer[INPUT_BUFFER_SIZE];
-uint8_t inputBufferPosition = 0;
+static uint8_t key;
+static char inputBuffer[INPUT_BUFFER_SIZE];
+static uint8_t inputBufferPosition = 0;
 
 /* PFD ------------------------------------------------------------------*/
 
@@ -86,17 +87,25 @@ void interactionServiceTask(void *argument) {
 				        inputBufferPosition <= RADIO_MSG_MAX_SIZE &&
 				        inputBufferPosition <= INPUT_BUFFER_SIZE) {
 
+						const char msg[] = "Hello world";
+
 				        radioMessage_t pendingRadioMessage;
 
+				        memset(&pendingRadioMessage.data, 0, sizeof(pendingRadioMessage.data));
 				        pendingRadioMessage.length = inputBufferPosition;
 
-//				        memcpy(pendingRadioMessage.data, inputBuffer, strlen(inputBuffer) + 1);
+//				        for (uint16_t i = 0; i < inputBufferPosition; ++i) {
+//				            pendingRadioMessage.data[i] = inputBuffer[i];
+//				        }
+				        memcpy(pendingRadioMessage.data, inputBuffer, strlen(inputBuffer) + 1);
+//				        strncpy((char*)pendingRadioMessage.data, msg, strlen(msg));
+
 
 				        osMessageQueuePut(radioInputQueueHandle, &pendingRadioMessage, 0, 0);
 
 				        resetInputState();
 				    } else {
-				        APP_LOG(TS_OFF, VLEVEL_M, "[Interaction Service] Invalid input length or empty buffer");
+				        APP_LOG(TS_OFF, VLEVEL_M, "[Interaction Service] Invalid input length or empty buffer\n\r");
 				    }
 				break;
 			}

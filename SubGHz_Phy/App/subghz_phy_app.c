@@ -26,7 +26,11 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
+#include "global_config.h"
 #include "application_service.h"
+
+#include "stm32_timer.h"
+#include "sys_app.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -36,6 +40,13 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+
+typedef enum
+{
+  RADIO_IDLE,
+  RADIO_RX,
+  RADIO_TX,
+} radioState_t;
 
 /* USER CODE END PTD */
 
@@ -66,6 +77,10 @@
 static RadioEvents_t RadioEvents;
 
 /* USER CODE BEGIN PV */
+osMessageQueueId_t radioInputQueueHandle = NULL;
+
+static uint8_t BufferRx[MAX_APP_BUFFER_SIZE];
+static radioState_t radioState = RADIO_RX;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -145,14 +160,6 @@ void SubghzApp_Init(void)
 
 /* USER CODE BEGIN EF */
 
-void startRadioListening(void) {
-	Radio.Rx(0);
-}
-
-void sendRadioMessage(uint8_t *buffer, uint8_t size) {
-	Radio.Send(buffer, size);
-}
-
 /* USER CODE END EF */
 
 /* Private functions ---------------------------------------------------------*/
@@ -160,7 +167,6 @@ static void OnTxDone(void)
 {
   /* USER CODE BEGIN OnTxDone */
   APP_LOG(TS_ON, VLEVEL_L, "OnTxDone\n\r");
-  RadioISRCallback();
   /* USER CODE END OnTxDone */
 }
 
@@ -168,25 +174,49 @@ static void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t LoraS
 {
   /* USER CODE BEGIN OnRxDone */
   APP_LOG(TS_ON, VLEVEL_L, "OnRxDone\n\r");
+  APP_LOG(TS_ON, VLEVEL_L, "RssiValue=%d dBm, Cfo=%dkHz\n\r", rssi, LoraSnr_FskCfo);
+
+  if (size == 0 || size > APP_BUFFER_SIZE) {
+	  APP_LOG(TS_ON, VLEVEL_L, "Invalid RX size: %d\n\r", size);
+	  return;
+  }
+
+//  if (memchr(data, '\0', size) == NULL) {
+//	  APP_LOG(TS_ON, VLEVEL_L, "Invalid string on RX \n\r");
+//	  return;
+//  }
+
+  radioMessage_t receivedMessage = {0};
+
+  memcpy(receivedMessage.data, payload, size);
+  receivedMessage.length = size;
+
+  APP_LOG(TS_ON, VLEVEL_L, "Received string: %s\n\r", receivedMessage.data);
+
+
   RadioISRCallback();
+
   /* USER CODE END OnRxDone */
 }
 
 static void OnTxTimeout(void)
 {
   /* USER CODE BEGIN OnTxTimeout */
+	APP_LOG(TS_ON, VLEVEL_L, "TX Timeout \n\r");
   /* USER CODE END OnTxTimeout */
 }
 
 static void OnRxTimeout(void)
 {
   /* USER CODE BEGIN OnRxTimeout */
+  APP_LOG(TS_ON, VLEVEL_L, "RX Timeout \n\r");
   /* USER CODE END OnRxTimeout */
 }
 
 static void OnRxError(void)
 {
   /* USER CODE BEGIN OnRxError */
+  APP_LOG(TS_ON, VLEVEL_L, "RX Error \n\r");
   /* USER CODE END OnRxError */
 }
 
@@ -196,5 +226,52 @@ static void OnRxError(void)
 static void RadioISRCallback(void) {
 	uint32_t flags = 0x00000001U; // Define the flag to set
 	osThreadFlagsSet(applicationServiceTaskID, flags);
+}
+
+void radioServiceTask(void *argument) {
+
+	// init radio service
+
+	radioMessage_t incomingMessage;
+
+    for (;;) {
+
+    	// could be refactored for background listening later
+
+    	switch (radioState) {
+    	case RADIO_IDLE:
+
+			Radio.Sleep();
+			osDelay(2);
+
+    		if (osMessageQueueGet(radioInputQueueHandle, &incomingMessage, NULL, 0) == osOK) {
+		        APP_LOG(TS_OFF, VLEVEL_M, "[Radio Service] Sending message: %s \n\r", incomingMessage.data);
+				Radio.Send(incomingMessage.data, incomingMessage.length);
+			}
+
+    		break;
+
+    	case RADIO_RX:
+
+    		// continuous listening
+    		Radio.Rx(0);
+
+    		break;
+
+    	case RADIO_TX:
+    		break;
+    	}
+
+        osDelay(100);
+
+//    	Radio.Sleep()
+
+//    	if (osMessageQueueGet(radioInputQueueHandle, &incomingMessage, NULL, osWaitForever) == osOK) {
+//			// Send the data
+////    		APP_LOG(TS_ON, VLEVEL_M, "Calling Radio.Send for message: %s \n\r", incomingMessage.data);
+//    		Radio.Send(incomingMessage.data, PAYLOAD_LEN);
+//		}
+
+    }
 }
 /* USER CODE END PrFD */

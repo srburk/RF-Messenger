@@ -28,11 +28,17 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "cmsis_os.h"
+#include "global_config.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+
+typedef struct {
+	uint8_t data[RADIO_MSG_MAX_SIZE];
+	uint8_t length;
+} radioMessage_t;
 
 /* USER CODE END ET */
 
@@ -88,6 +94,10 @@ extern "C" {
 /* External variables --------------------------------------------------------*/
 /* USER CODE BEGIN EV */
 
+/* Exported Variables ------------------------------------------------------------------*/
+
+extern osMessageQueueId_t radioInputQueueHandle;
+
 /* USER CODE END EV */
 
 /* Exported macros -----------------------------------------------------------*/
@@ -103,17 +113,7 @@ void SubghzApp_Init(void);
 
 /* USER CODE BEGIN EFP */
 
-/**
-  * @brief  Start Continuous RX
-  */
-void radioStartListening(void);
-
-/**
-  * @brief  Send message
-  * @param 	char buffer to be sent
-  * @param	size of buffer to be sent
-  */
-void radioSendMessage(unsigned char *buffer, unsigned char size);
+void radioServiceTask(void *argument);
 
 /* USER CODE END EFP */
 
