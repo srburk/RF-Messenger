@@ -77,6 +77,7 @@
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/SubGHz_Phy/stm32_radio_driver"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../Services/"/>
+									<listOptionValue builtIn="false" value="&quot;C:\Users\rsieb\STM32CubeIDE\workspace_1.16.1\RF-Messenger\Middlewares\Third_Party\LCD&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1614580084" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
