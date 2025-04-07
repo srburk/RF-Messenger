@@ -257,14 +257,14 @@ void radioServiceTask(void *argument) {
         		APP_LOG(TS_ON, VLEVEL_L, "[Radio Service] Switching to listening mode... \n\r");
     			radioState = RADIO_RX_LISTENING;
     			osThreadFlagsClear(EVENT_USER_RX_MODE | EVENT_USER_IDLE);
+
+    	   		// continuous listening starts here now
+    			Radio.Rx(0);
     		}
 
     		break;
 
     	case RADIO_RX_LISTENING:
-
-    		// continuous listening
-    		Radio.Rx(0);
 
     		eventFlags = osThreadFlagsGet();
 

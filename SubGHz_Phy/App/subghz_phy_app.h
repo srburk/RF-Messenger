@@ -64,10 +64,10 @@ typedef struct {
 
 #elif (( USE_MODEM_LORA == 0 ) && ( USE_MODEM_FSK == 1 ))
 
-#define FSK_FDEV                                    5000     /* Hz */
+#define FSK_FDEV                                    2400     /* Hz */
 #define FSK_DATARATE                                4800     /* bps */
-#define FSK_BANDWIDTH                               10000     /* Hz */
-#define FSK_PREAMBLE_LENGTH                         16         /* Same for Tx and Rx */
+#define FSK_BANDWIDTH                               9600     /* Hz */
+#define FSK_PREAMBLE_LENGTH                         32         /* Same for Tx and Rx */
 #define FSK_FIX_LENGTH_PAYLOAD_ON                   false
 
 #else
@@ -88,7 +88,7 @@ typedef struct {
 /* USER CODE END FREERTOS_EC */
 
 /* USER CODE BEGIN EC */
-//#define TX_OUTPUT_POWER                             5        /* dBm */
+#define TX_OUTPUT_POWER                             22        /* dBm */
 /* USER CODE END EC */
 
 /* External variables --------------------------------------------------------*/

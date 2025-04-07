@@ -45,6 +45,9 @@ uiState_t currentUIState = UI_MENU_STATE;
 static uint8_t key;
 static char messageBuffer[INPUT_BUFFER_SIZE];
 static uint8_t messageBufferPosition = 0;
+static int messageBufferDidChange = 0; // BOOL
+
+/* Constants ------------------------------------------------------------------*/
 
 static const char menuTopLeftText[] = "SEND";
 static const char menuTopRightText[] = "RECEIVE";
@@ -58,7 +61,10 @@ static const char menuBottomText[] = "<- SELECTION ->";
 
 static void resetMessageBuffer(void);
 static void readKeyboard(uint8_t *key);
-static void checkForReturnToMenu(uint8_t *key);
+
+// screen
+static void resetMessageBuffer(void);
+static void returnToMenu(void);
 
 /* PF ------------------------------------------------------------------*/
 
@@ -73,17 +79,33 @@ static void readKeyboard(uint8_t *key) {
     }
 }
 
-static void checkForReturnToMenu(uint8_t *key) {
-	if (*key == ESC_KEY) {
-		resetMessageBuffer();
-		HD44780_Clear();
-		HD44780_SetCursor(0,0);
-		currentUIState = UI_MENU_STATE;
-		resetMessageBuffer();
+static void writeMessageBufferToScreen() {
+	HD44780_Clear();
+	HD44780_SetCursor(0,0);
+	HD44780_PrintStr(messageBuffer);
+//	HD44780_SetCursor(messageBufferPosition, 0);
+	messageBufferDidChange = 0;
+}
 
-		// let the radio know to cool off
-		osThreadFlagsSet(radioServiceTaskID, EVENT_USER_IDLE);
-	}
+static void returnToMenu() {
+	HD44780_Clear();
+	resetMessageBuffer();
+	currentUIState = UI_MENU_STATE;
+
+	// let the radio know to cool off
+	osThreadFlagsSet(radioServiceTaskID, EVENT_USER_IDLE);
+
+	// menu transition
+	// print user menu to the LCD screen
+	HD44780_SetCursor(0, 0);
+	HD44780_PrintStr(menuTopLeftText);
+	HD44780_SetCursor(LCD_DISPLAY_WIDTH - strlen(menuTopRightText),0);
+	HD44780_PrintStr(menuTopRightText);
+	HD44780_SetCursor((LCD_DISPLAY_WIDTH - strlen(menuBottomText)) / 2, 3);
+	HD44780_PrintStr(menuBottomText);
+
+	// clear cursor
+	HD44780_NoCursor();
 }
 
 /* Functions ------------------------------------------------------------------*/
@@ -96,21 +118,14 @@ void interactionServiceTask(void *argument) {
 	// initialize the LCD screen
 	HD44780_Init(4);
 	HD44780_Blink();
-	HD44780_Clear();
+
+	returnToMenu();
 
 	while (1) {
 		readKeyboard(&key);
 
 		switch (currentUIState) {
 		case UI_MENU_STATE:
-
-			// print user menu to the LCD screen
-			HD44780_SetCursor(0, 0);
-			HD44780_PrintStr(menuTopLeftText);
-			HD44780_SetCursor(LCD_DISPLAY_WIDTH - strlen(menuTopRightText),0);
-			HD44780_PrintStr(menuTopRightText);
-			HD44780_SetCursor((LCD_DISPLAY_WIDTH - strlen(menuBottomText)) / 2, 3);
-			HD44780_PrintStr(menuBottomText);
 
 			// check for user menu selection
 			if (key == LEFT_ARROW) {
@@ -133,13 +148,15 @@ void interactionServiceTask(void *argument) {
 			break;
 		case UI_ENTRY_STATE:
 
-			// print user input to the LCD screen
-			HD44780_Clear();
-			HD44780_PrintStr(messageBuffer);
-			HD44780_SetCursor(messageBufferPosition, 0);
+			// update screen ONLY when change happens
+			if (messageBufferDidChange) {
+				writeMessageBufferToScreen();
+			}
 
-			// check for ESC
-			checkForReturnToMenu(&key);
+			if (key == ESC_KEY) {
+				returnToMenu();
+				break;
+			}
 
 			// SEND
 			if (key == ENTER_KEY) {
@@ -152,6 +169,7 @@ void interactionServiceTask(void *argument) {
 				        radioMessage_t pendingRadioMessage;
 				        pendingRadioMessage.length = messageBufferPosition;
 				        memcpy(pendingRadioMessage.data, messageBuffer, strlen(messageBuffer) + 1);
+						messageBufferDidChange = 1;
 
 				        osMessageQueuePut(radioSendQueueHandle, &pendingRadioMessage, 0, 0);
 
@@ -167,9 +185,10 @@ void interactionServiceTask(void *argument) {
 			// remove characters from input buffer
 			if (key == BACK_KEY) {
 				if (messageBufferPosition != 0) {
-					messageBuffer[messageBufferPosition] = 0x0;
 					messageBufferPosition--;
+					messageBuffer[messageBufferPosition] = 0x0;
 					APP_LOG(TS_OFF, VLEVEL_M, "Input Buffer: %s \n\r", messageBuffer);
+					messageBufferDidChange = 1;
 				}
 				break;
 			}
@@ -182,6 +201,7 @@ void interactionServiceTask(void *argument) {
 					messageBuffer[messageBufferPosition] = key;
 					messageBufferPosition++;
 					APP_LOG(TS_OFF, VLEVEL_M, "Input Buffer: %s \n\r", messageBuffer);
+					messageBufferDidChange = 1;
 				} else {
 					// full buffer
 					APP_LOG(TS_OFF, VLEVEL_M, "Input buffer full \n\r");
@@ -194,23 +214,28 @@ void interactionServiceTask(void *argument) {
 
 			radioMessage_t incomingMessage;
 
-			// print user receive state to screen
-			HD44780_Clear();
-			HD44780_SetCursor(0,0);
-			HD44780_PrintStr(messageBuffer);
+			// update screen ONLY when change happens
+			if (messageBufferDidChange) {
+				writeMessageBufferToScreen();
+			}
+
+			// check for ESC key
+			if (key == ESC_KEY) {
+				returnToMenu();
+				break;
+			}
 
 			if (osMessageQueueGet(radioReceiveQueueHandle, &incomingMessage, NULL, 0) == osOK) {
 				APP_LOG(TS_OFF, VLEVEL_M, "[Interaction Service] Received message for display: %s \n\r", incomingMessage.data);
 				// put message into buffer
+				resetMessageBuffer();
 				memcpy(messageBuffer, incomingMessage.data, incomingMessage.length);
+				messageBufferDidChange = 1;
 			}
-
-			// check for ESC key
-			checkForReturnToMenu(&key);
 
 			break;
 		}
 
-		osDelay(100);  // Poll every 100 ms
+		osDelay(100);
 	}
 }
