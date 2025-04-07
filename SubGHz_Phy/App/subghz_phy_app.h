@@ -88,7 +88,7 @@ typedef struct {
 /* USER CODE END FREERTOS_EC */
 
 /* USER CODE BEGIN EC */
-#define TX_OUTPUT_POWER                             5        /* dBm */
+//#define TX_OUTPUT_POWER                             5        /* dBm */
 /* USER CODE END EC */
 
 /* External variables --------------------------------------------------------*/

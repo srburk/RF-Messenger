@@ -281,7 +281,7 @@ void radioServiceTask(void *argument) {
     		APP_LOG(TS_ON, VLEVEL_L, "[Radio Service] Received string: %s\n\r", rxMessage.data);
 
     		// send to queue
-    		osMessageQueuePut(radioSendQueueHandle, &rxMessage, 0, 0);
+    		osMessageQueuePut(radioReceiveQueueHandle, &rxMessage, 0, 0);
 
     		radioState = RADIO_RX_LISTENING;
 
