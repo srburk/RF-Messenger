@@ -42,3 +42,4 @@ Debug/
 
 # Libraries
 /lib
+.settings/language.settings.xml

@@ -80,7 +80,7 @@ static RadioEvents_t RadioEvents;
 osMessageQueueId_t radioInputQueueHandle = NULL;
 
 static uint8_t BufferRx[MAX_APP_BUFFER_SIZE];
-static radioState_t radioState = RADIO_RX;
+static radioState_t radioState = RADIO_IDLE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
