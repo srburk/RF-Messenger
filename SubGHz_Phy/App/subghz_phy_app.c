@@ -193,7 +193,6 @@ static void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t LoraS
 
   APP_LOG(TS_ON, VLEVEL_L, "Received string: %s\n\r", receivedMessage.data);
 
-
   RadioISRCallback();
 
   /* USER CODE END OnRxDone */

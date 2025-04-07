@@ -83,23 +83,15 @@ void interactionServiceTask(void *argument) {
 
 			// SEND
 			if (key == ENTER_KEY) {
+				// validation checks
 				if (inputBufferPosition > 0 &&
 				        inputBufferPosition <= RADIO_MSG_MAX_SIZE &&
 				        inputBufferPosition <= INPUT_BUFFER_SIZE) {
 
-						const char msg[] = "Hello world";
-
+						// build radio message
 				        radioMessage_t pendingRadioMessage;
-
-				        memset(&pendingRadioMessage.data, 0, sizeof(pendingRadioMessage.data));
 				        pendingRadioMessage.length = inputBufferPosition;
-
-//				        for (uint16_t i = 0; i < inputBufferPosition; ++i) {
-//				            pendingRadioMessage.data[i] = inputBuffer[i];
-//				        }
 				        memcpy(pendingRadioMessage.data, inputBuffer, strlen(inputBuffer) + 1);
-//				        strncpy((char*)pendingRadioMessage.data, msg, strlen(msg));
-
 
 				        osMessageQueuePut(radioInputQueueHandle, &pendingRadioMessage, 0, 0);
 
@@ -110,6 +102,7 @@ void interactionServiceTask(void *argument) {
 				break;
 			}
 
+			// remove characters from input buffer
 			if (key == BACK_KEY) {
 				if (inputBufferPosition != 0) {
 					inputBuffer[inputBufferPosition] = 0x0;
