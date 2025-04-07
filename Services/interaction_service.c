@@ -142,7 +142,7 @@ void interactionServiceTask(void *argument) {
 
 //				        memcpy(pendingRadioMessage.data, inputBuffer, strlen(inputBuffer) + 1);
 
-				        osMessageQueuePut(radioInputQueueHandle, &pendingRadioMessage, 0, 0);
+				        //osMessageQueuePut(radioInputQueueHandle, &pendingRadioMessage, 0, 0);
 
 				        resetInputState();
 				        HD44780_Clear();
