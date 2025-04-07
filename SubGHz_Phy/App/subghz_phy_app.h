@@ -95,8 +95,11 @@ typedef struct {
 /* USER CODE BEGIN EV */
 
 /* Exported Variables ------------------------------------------------------------------*/
+extern osThreadId_t radioServiceTaskID;
 
-extern osMessageQueueId_t radioInputQueueHandle;
+// handles for sending and receiving from radio from other threads
+extern osMessageQueueId_t radioSendQueueHandle;
+extern osMessageQueueId_t radioReceiveQueueHandle;
 
 /* USER CODE END EV */
 

@@ -44,7 +44,8 @@
 typedef enum
 {
   RADIO_IDLE,
-  RADIO_RX,
+  RADIO_RX_LISTENING,
+  RADIO_RX_RECEIVED,
   RADIO_TX,
 } radioState_t;
 
@@ -77,9 +78,19 @@ typedef enum
 static RadioEvents_t RadioEvents;
 
 /* USER CODE BEGIN PV */
-osMessageQueueId_t radioInputQueueHandle = NULL;
 
-static uint8_t BufferRx[MAX_APP_BUFFER_SIZE];
+osThreadId_t radioServiceTaskID;
+
+osMessageQueueId_t radioSendQueueHandle = NULL;
+osMessageQueueId_t radioReceiveQueueHandle = NULL;
+
+static uint32_t eventFlags;
+
+// message storage buffers
+static radioMessage_t txMessage;
+static radioMessage_t rxMessage;
+
+// Radio state
 static radioState_t radioState = RADIO_IDLE;
 /* USER CODE END PV */
 
@@ -186,15 +197,10 @@ static void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t LoraS
 //	  return;
 //  }
 
-  radioMessage_t receivedMessage = {0};
+  memcpy(rxMessage.data, payload, size);
+  rxMessage.length = size;
 
-  memcpy(receivedMessage.data, payload, size);
-  receivedMessage.length = size;
-
-  APP_LOG(TS_ON, VLEVEL_L, "Received string: %s\n\r", receivedMessage.data);
-
-  RadioISRCallback();
-
+  radioState = RADIO_RX_RECEIVED;
   /* USER CODE END OnRxDone */
 }
 
@@ -231,8 +237,6 @@ void radioServiceTask(void *argument) {
 
 	// init radio service
 
-	radioMessage_t incomingMessage;
-
     for (;;) {
 
     	// could be refactored for background listening later
@@ -243,21 +247,53 @@ void radioServiceTask(void *argument) {
 			Radio.Sleep();
 			osDelay(2);
 
-    		if (osMessageQueueGet(radioInputQueueHandle, &incomingMessage, NULL, 0) == osOK) {
-		        APP_LOG(TS_OFF, VLEVEL_M, "[Radio Service] Sending message: %s \n\r", incomingMessage.data);
-				Radio.Send(incomingMessage.data, incomingMessage.length);
+    		if (osMessageQueueGet(radioSendQueueHandle, &txMessage, NULL, 0) == osOK) {
+    			radioState = RADIO_TX;
 			}
+
+    		eventFlags = osThreadFlagsGet();
+
+    		if (eventFlags & EVENT_USER_RX_MODE) {
+        		APP_LOG(TS_ON, VLEVEL_L, "[Radio Service] Switching to listening mode... \n\r");
+    			radioState = RADIO_RX_LISTENING;
+    			osThreadFlagsClear(EVENT_USER_RX_MODE | EVENT_USER_IDLE);
+    		}
 
     		break;
 
-    	case RADIO_RX:
+    	case RADIO_RX_LISTENING:
 
     		// continuous listening
     		Radio.Rx(0);
 
+    		eventFlags = osThreadFlagsGet();
+
+    		if (eventFlags & EVENT_USER_IDLE) {
+				APP_LOG(TS_ON, VLEVEL_L, "[Radio Service] Switching to idle mode... \n\r");
+				radioState = RADIO_IDLE;
+				osThreadFlagsClear(EVENT_USER_RX_MODE | EVENT_USER_IDLE);
+    		}
+
+    		break;
+
+    	case RADIO_RX_RECEIVED:
+
+    		APP_LOG(TS_ON, VLEVEL_L, "[Radio Service] Received string: %s\n\r", rxMessage.data);
+
+    		// send to queue
+    		osMessageQueuePut(radioSendQueueHandle, &rxMessage, 0, 0);
+
+    		radioState = RADIO_RX_LISTENING;
+
     		break;
 
     	case RADIO_TX:
+
+    		APP_LOG(TS_OFF, VLEVEL_M, "[Radio Service] Sending message: %s \n\r", txMessage.data);
+			Radio.Send(txMessage.data, txMessage.length);
+
+			radioState = RADIO_IDLE;
+
     		break;
     	}
 

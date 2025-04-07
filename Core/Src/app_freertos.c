@@ -55,7 +55,6 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
-osThreadId_t radioServiceTaskID;
 const osThreadAttr_t radioServiceTask_attr = {
 		.name = "radioServiceTask",
 		.stack_size = 128 * 4, // in bytes
@@ -116,15 +115,20 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  radioInputQueueHandle = osMessageQueueNew(RADIO_INPUT_QUEUE_SIZE, sizeof(radioMessage_t), NULL);
+  radioSendQueueHandle = osMessageQueueNew(RADIO_SEND_QUEUE_SIZE, sizeof(radioMessage_t), NULL);
+  radioReceiveQueueHandle = osMessageQueueNew(RADIO_RECEIVE_QUEUE_SIZE, sizeof(radioMessage_t), NULL);
 
-  if (radioInputQueueHandle == NULL) {
-	  APP_LOG(TS_OFF, VLEVEL_M, "[Error] Failed to create radio input message queue\n\r");
+  if (radioSendQueueHandle == NULL) {
+	  APP_LOG(TS_OFF, VLEVEL_M, "[Error] Failed to create radio send message queue\n\r");
   }
+
+  if (radioReceiveQueueHandle == NULL) {
+  	  APP_LOG(TS_OFF, VLEVEL_M, "[Error] Failed to create radio receive message queue\n\r");
+    }
 
   // DOING WEIRD STUFF HERE TO AVOID DEFAULT TASK SCHEDULING
   radioServiceTaskID = osThreadNew(radioServiceTask, NULL, &radioServiceTask_attr);
-  applicationServiceTaskID = osThreadNew(applicationServiceTask, NULL, &applicationServiceTask_attr);
+//  applicationServiceTaskID = osThreadNew(applicationServiceTask, NULL, &applicationServiceTask_attr);
   interactionServiceTaskID = osThreadNew(interactionServiceTask, NULL, &interactionServiceTask_attr);
 
   return;

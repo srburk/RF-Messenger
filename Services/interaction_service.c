@@ -14,6 +14,7 @@
 
 #include "global_config.h"
 #include "subghz_phy_app.h"
+#include "subghz_phy_app.h"
 //#include "radio_service.h"
 
 
@@ -56,7 +57,8 @@ static const char menuBottomText[] = "<- SELECTION ->";
 /* PFD ------------------------------------------------------------------*/
 
 static void resetInputState(void);
-static void read_keyboard(uint8_t *key);
+static void readKeyboard(uint8_t *key);
+static void checkForReturnToMenu(uint8_t *key);
 
 /* PF ------------------------------------------------------------------*/
 
@@ -65,19 +67,22 @@ static void resetInputState(void) {
 	inputBufferPosition = 0;
 }
 
-static void read_keyboard(uint8_t *key) {
+static void readKeyboard(uint8_t *key) {
     if (HAL_I2C_Master_Receive(&hi2c2, 0x5F << 1, key, 1, KEYBOARD_I2C_DELAY) != HAL_OK) {
         *key = 0;  // No key received
     }
 }
 
-static void return_to_menu(uint8_t key) {
-	if (key == ESC_KEY) {
+static void checkForReturnToMenu(uint8_t *key) {
+	if (*key == ESC_KEY) {
 		resetInputState();
 		HD44780_Clear();
 		HD44780_SetCursor(0,0);
 		currentUIState = UI_MENU_STATE;
 		resetInputState();
+
+		// let the radio know to cool off
+		osThreadFlagsSet(radioServiceTaskID, EVENT_USER_IDLE);
 	}
 }
 
@@ -94,7 +99,7 @@ void interactionServiceTask(void *argument) {
 	HD44780_Clear();
 
 	while (1) {
-		read_keyboard(&key);
+		readKeyboard(&key);
 
 		switch (currentUIState) {
 		case UI_MENU_STATE:
@@ -112,11 +117,17 @@ void interactionServiceTask(void *argument) {
 				HD44780_Clear();
 				resetInputState();
 				currentUIState = UI_ENTRY_STATE;
+				break;
 			}
-			else if (key == RIGHT_ARROW) {
+
+			if (key == RIGHT_ARROW) {
 				HD44780_Clear();
 				resetInputState();
 				currentUIState = UI_RECEIVE_STATE;
+
+				// let application know we're listening now (radio uses this)
+				osThreadFlagsSet(radioServiceTaskID, EVENT_USER_RX_MODE);
+				break;
 			}
 
 			break;
@@ -128,7 +139,7 @@ void interactionServiceTask(void *argument) {
 			HD44780_SetCursor(inputBufferPosition, 0);
 
 			// check for ESC
-			return_to_menu(key);
+			checkForReturnToMenu(&key);
 
 			// SEND
 			if (key == ENTER_KEY) {
@@ -142,7 +153,7 @@ void interactionServiceTask(void *argument) {
 				        pendingRadioMessage.length = inputBufferPosition;
 				        memcpy(pendingRadioMessage.data, inputBuffer, strlen(inputBuffer) + 1);
 
-				        osMessageQueuePut(radioInputQueueHandle, &pendingRadioMessage, 0, 0);
+				        osMessageQueuePut(radioSendQueueHandle, &pendingRadioMessage, 0, 0);
 
 				        resetInputState();
 				        HD44780_Clear();
@@ -178,15 +189,22 @@ void interactionServiceTask(void *argument) {
 			}
 
 			break;
+
 		case UI_RECEIVE_STATE:
+
+			radioMessage_t incomingMessage;
 
 			// print user receive state to screen
 			HD44780_Clear();
 			HD44780_SetCursor(0,0);
 			// Edit :HD44780_PrintStr(Text Here);
 
+			if (osMessageQueueGet(radioReceiveQueueHandle, &incomingMessage, NULL, 0) == osOK) {
+				APP_LOG(TS_OFF, VLEVEL_M, "[Interaction Service] Received message for display: %s \n\r", incomingMessage.data);
+			}
+
 			// check for ESC key
-			return_to_menu(key);
+			checkForReturnToMenu(&key);
 
 			break;
 		}

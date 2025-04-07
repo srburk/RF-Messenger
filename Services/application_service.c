@@ -11,25 +11,40 @@
 #include "stm32_timer.h"
 #include "sys_app.h"
 
-// Private Define
+/* PD ------------------------------------------------------------------*/
 
 #define ISR_FLAG_TIMEOUT 10
 
-// Variables
+/* Public Variables ------------------------------------------------------------------*/
 
 osThreadId_t applicationServiceTaskID = NULL;
+osEventFlagsId_t applicationEventsHandle;
 
-// Public Functions
+/* Private variables ------------------------------------------------------------------*/
+
+static appState_t appState = APP_IDLE;
+
+/* Functions ------------------------------------------------------------------*/
 
 void applicationServiceTask(void *argument) {
-	uint32_t flags = 0x00000001U;
 
 	for (;;) {
-		uint32_t result = osThreadFlagsWait(flags, osFlagsWaitAny, ISR_FLAG_TIMEOUT);
+//		uint32_t result = osThreadFlagsWait(applicationEventsHandle, osFlagsWaitAny, ISR_FLAG_TIMEOUT);
 
-		if (result & flags) {
+//		if (result & flags) {
 			// Handle the event triggered by the ISR
-			APP_LOG(TS_OFF, VLEVEL_M, " [app_service] Event received by application! \n\r");
+//			APP_LOG(TS_OFF, VLEVEL_M, " [app_service] Event received by application! \n\r");
+//			break;
+//		}
+
+		switch (appState) {
+		case APP_IDLE:
+
+
+
+			break;
+		case APP_LISTENING:
+			break;
 		}
 	}
 }
